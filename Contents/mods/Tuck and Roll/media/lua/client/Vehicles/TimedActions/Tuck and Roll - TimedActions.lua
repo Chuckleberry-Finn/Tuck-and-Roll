@@ -48,13 +48,20 @@ local function DamageFromTuckAndRoll(player, hitSeverity)
         end
 
         damage=damage*0.9
-        bodyPart:AddDamage(damage)
 
         if damage > 30 and ZombRand(100)<=90 then
             bodyPart:setScratched(true, true)
             bodyPart:setScratchTime(bodyPart:getScratchTime()+ZombRand(1,3))
             bodyPart:setBleedingTime(ZombRand(3,10))
+
+            local clothingBP = BloodBodyPartType.FromString(bpRandSelect)
+            local protection = player:getBodyPartClothingDefense(BodyPartType.ToIndex(bpType), true, false)/100
+            damage = damage * (1-(protection*0.75))
+            player:addHole(clothingBP)
+            player:addBlood(clothingBP, true, true, true)
         end
+
+        bodyPart:AddDamage(damage)
 
         if damage > 40 and ZombRand(12)==0 then
             bodyPart:generateDeepWound()
