@@ -1,0 +1,4 @@
+version=1
+title=Tuck and Roll
+description=Allow players to jump out of moving vehicles at their own risk.
+visibility=public
