@@ -21,18 +21,14 @@ end
 ---@param player IsoPlayer|IsoGameCharacter
 local function DamageFromTuckAndRoll(player, hitSeverity)
 
-    local baseDamage = hitSeverity
+    local baseDamage = hitSeverity/2
     local iterations = (2 + baseDamage * 0.7)/2
-
-    print("baseDamage:"..baseDamage.." iterations:"..iterations)
 
     for i=0, iterations do
 
         local bpRandSelect = bodyPartSelection[ZombRand(#bodyPartSelection)+1]
-        print("bpRandSelect: "..bpRandSelect)
         local bpType = BodyPartType.FromString(bpRandSelect)
         local bodyPart = player:getBodyDamage():getBodyPart(bpType)
-
         local damage = math.max(5, ZombRand(baseDamage-15, baseDamage))
 
         if player:HasTrait("FastHealer") then
@@ -49,25 +45,27 @@ local function DamageFromTuckAndRoll(player, hitSeverity)
 
         damage=damage*0.9
 
-        if damage > 30 and ZombRand(100)<=90 then
+        if damage > 10 and ZombRand(100)<=80 then
             bodyPart:setScratched(true, true)
             bodyPart:setScratchTime(bodyPart:getScratchTime()+ZombRand(1,3))
-            bodyPart:setBleedingTime(ZombRand(3,10))
+            if damage > 20 and ZombRand(100)<=75 then
+                bodyPart:setBleedingTime(ZombRand(3,10))
+            end
 
             local clothingBP = BloodBodyPartType.FromString(bpRandSelect)
             local protection = player:getBodyPartClothingDefense(BodyPartType.ToIndex(bpType), true, false)/100
-            damage = damage * (1-(protection*0.75))
+            damage = damage * (1-(protection*0.9))
             player:addHole(clothingBP)
             player:addBlood(clothingBP, true, true, true)
         end
 
         bodyPart:AddDamage(damage)
 
-        if damage > 40 and ZombRand(12)==0 then
+        if damage > 15 and ZombRand(12)==0 then
             bodyPart:generateDeepWound()
         end
 
-        if damage > 10 and ZombRand(100)<=10 then
+        if damage > 10 and ZombRand(100)<=damage then
             bodyPart:setFractureTime(ZombRand(ZombRand(10, damage+10),ZombRand(damage+20, damage+30)))
         end
 
@@ -75,13 +73,34 @@ local function DamageFromTuckAndRoll(player, hitSeverity)
             bodyPart:setFractureTime(ZombRand(ZombRand(10, damage+10),ZombRand(damage+20, damage+30)))
         end
 
-        if damage > 10 and ZombRand(100)<=60 and bpRandSelect=="Groin" then
+        if damage > 10 and ZombRand(100)<=50 and bpRandSelect=="Groin" then
             bodyPart:setFractureTime(ZombRand(ZombRand(10, damage+20),ZombRand(damage+30, damage+40)))
         end
     end
 
     player:getBodyDamage():Update()
     player:addBlood(hitSeverity)
+end
+
+
+---@param player IsoPlayer|IsoGameCharacter|IsoMovingObject
+local function stumble(player, speedKmHour)
+    local nimbleLvl = player:getPerkLevel(Perks.Nimble)
+    local speed = math.abs(speedKmHour)
+
+    if math.abs(nimbleLvl-speed) > 3 then
+        nimbleLvl = nimbleLvl+3
+        player:clearVariable("BumpFallType")
+        player:setBumpType("stagger")
+        player:setBumpDone(false)
+        player:setBumpFall(nimbleLvl < speed)
+        player:setBumpFallType("pushedBehind")
+
+        if nimbleLvl < speed then
+            print("nimbleLvl ("..nimbleLvl..") < speed ("..speed..")")
+            DamageFromTuckAndRoll(player, speed-nimbleLvl)
+        end
+    end
 end
 
 
@@ -100,62 +119,17 @@ end
 Events.OnTick.Add(forceVehiclePhysics)
 
 
-function ISExitVehicle:isValid()
-    self.vehicle = self.character:getVehicle();
-    --if self.vehicle and math.abs(self.vehicle:getCurrentSpeedKmHour()) < 1 then
-    --    return true;
-    --end
-    return true--false;
-end
-
-function ISCloseVehicleDoor:isValid()
-    return self.part and self.part:getDoor() and self.part:getDoor():isOpen() --and self.vehicle:isStopped()
-end
-
-function ISOpenVehicleDoor:isValid()
-    return self.part and self.part:getDoor() and not self.part:getDoor():isOpen() --and self.vehicle:isStopped()
-end
+----Hard Overwrites to avoid checking if vehicle stopped or not
+function ISExitVehicle:isValid() self.vehicle = self.character:getVehicle(); return true end
+function ISCloseVehicleDoor:isValid() return self.part and self.part:getDoor() and self.part:getDoor():isOpen() end
+function ISOpenVehicleDoor:isValid() return self.part and self.part:getDoor() and not self.part:getDoor():isOpen() end
 
 
----@param player IsoPlayer|IsoGameCharacter|IsoMovingObject
-local function stumble(player, speedKmHour)
-    local nimbleLvl = player:getPerkLevel(Perks.Nimble)+3
-    local speed = math.abs(speedKmHour)
-    player:clearVariable("BumpFallType")
-    player:setBumpType("stagger")
-    player:setBumpDone(false)
-    player:setBumpFall(nimbleLvl < speed)
-    player:setBumpFallType("pushedBehind")
-
-    if nimbleLvl < speed then
-        print("nimbleLvl ("..nimbleLvl..") < speed ("..speed..")")
-        DamageFromTuckAndRoll(player, speed-nimbleLvl)
-    end
-end
-
-
+---Safe Overwrite
+local ISExitVehicle_perform = ISExitVehicle.perform
 function ISExitVehicle:perform()
     local vehicle = self.character:getVehicle()
-    local seat = vehicle:getSeat(self.character)
-    --	if vehicle:isDriver(self.character) and vehicle:isEngineRunning() then
-    --		if isClient() then
-    --			sendClientCommand(self.character, 'vehicle', 'shutOff', {})
-    --		else
-    --			vehicle:shutOff()
-    --		end
-    --	end
-    vehicle:exit(self.character)
-    vehicle:setCharacterPosition(self.character, seat, "outside")
-    self.character:PlayAnim("Idle")
-    triggerEvent("OnExitVehicle", self.character)
-    vehicle:updateHasExtendOffsetForExitEnd(self.character);
-
-    ----//
+    ISExitVehicle_perform(self)
     vehiclesRecentlyJumpedFrom[vehicle] = true
     stumble(self.character, vehicle:getCurrentSpeedKmHour())
-    ----//
-
-    -- needed to remove from queue / start next.
-    self.vehicle = vehicle;
-    ISBaseTimedAction.perform(self)
 end
