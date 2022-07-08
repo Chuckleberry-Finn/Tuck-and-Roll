@@ -1,4 +1,7 @@
 name=Tuck and Roll
 id=TuckandRoll
-description=Allow players to jump out of moving vehicles at their own risk.
+description=[41.72+] Allow players to jump out of moving vehicles at their own risk.
+description=
+description=Tap E (or your interact method) 3 (three) times quickly to jump out of your car while it's moving.
+description=This mod also lowers the threshold to exit cars normally to 3 mph at no penalty.
 poster=poster.png
