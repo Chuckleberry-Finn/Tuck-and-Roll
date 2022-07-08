@@ -149,7 +149,10 @@ Events.OnPlayerUpdate.Add(validateKeyPressTimes)
 function ISExitVehicle:isValid()
     self.vehicle = self.character:getVehicle();
     if self.vehicle then
-        if math.abs(self.vehicle:getCurrentSpeedKmHour()) > 6 and (not keyPressers[self.character] or #keyPressers[self.character]<4) then
+
+        local lowSpeedThreshold = (self.character:getPerkLevel(Perks.Nimble)+6)
+
+        if math.abs(self.vehicle:getCurrentSpeedKmHour()) > lowSpeedThreshold and (not keyPressers[self.character] or #keyPressers[self.character]<4) then
             playerTriedExit(self.character)
             return false
         end
