@@ -24,6 +24,8 @@ local function DamageFromTuckAndRoll(player, hitSeverity)
     local baseDamage = hitSeverity/2
     local iterations = (2 + baseDamage * 0.7)/2
 
+    local dmgThreshold = 0
+
     for i=0, iterations do
 
         local bpRandSelect = bodyPartSelection[ZombRand(#bodyPartSelection)+1]
@@ -61,25 +63,35 @@ local function DamageFromTuckAndRoll(player, hitSeverity)
 
         bodyPart:AddDamage(damage)
 
+        dmgThreshold = math.max(dmgThreshold,damage)
+
         if damage > 15 and ZombRand(12)==0 then
             bodyPart:generateDeepWound()
         end
 
-        if damage > 10 and ZombRand(100)<=damage then
+        if damage > 10 and ZombRand(100)<=damage and SandboxVars.BoneFracture==true then
             bodyPart:setFractureTime(ZombRand(ZombRand(10, damage+10),ZombRand(damage+20, damage+30)))
         end
 
-        if damage > 30 and ZombRand(100)<=80 and bpRandSelect=="Head" then
+        if damage > 30 and ZombRand(100)<=80 and bpRandSelect=="Head" and SandboxVars.BoneFracture==true then
             bodyPart:setFractureTime(ZombRand(ZombRand(10, damage+10),ZombRand(damage+20, damage+30)))
         end
 
-        if damage > 10 and ZombRand(100)<=50 and bpRandSelect=="Groin" then
+        if damage > 10 and ZombRand(100)<=50 and bpRandSelect=="Groin" and SandboxVars.BoneFracture==true then
             bodyPart:setFractureTime(ZombRand(ZombRand(10, damage+20),ZombRand(damage+30, damage+40)))
         end
     end
 
     player:getBodyDamage():Update()
     player:addBlood(hitSeverity)
+
+    if dmgThreshold>5 then
+        player:clearVariable("BumpFallType")
+        player:setBumpType("stagger")
+        player:setBumpDone(false)
+        player:setBumpFall((dmgThreshold>10))
+        player:setBumpFallType("pushedBehind")
+    end
 end
 
 
@@ -90,11 +102,6 @@ local function stumble(player, speedKmHour)
 
     if math.abs(nimbleLvl-speed) > 3 then
         nimbleLvl = nimbleLvl+3
-        player:clearVariable("BumpFallType")
-        player:setBumpType("stagger")
-        player:setBumpDone(false)
-        player:setBumpFall(nimbleLvl < speed)
-        player:setBumpFallType("pushedBehind")
 
         if nimbleLvl < speed then
             print("nimbleLvl ("..nimbleLvl..") < speed ("..speed..")")
@@ -142,7 +149,7 @@ Events.OnPlayerUpdate.Add(validateKeyPressTimes)
 function ISExitVehicle:isValid()
     self.vehicle = self.character:getVehicle();
     if self.vehicle then
-        if math.abs(self.vehicle:getCurrentSpeedKmHour()) > 3 and (not keyPressers[self.character] or #keyPressers[self.character]<4) then
+        if math.abs(self.vehicle:getCurrentSpeedKmHour()) > 6 and (not keyPressers[self.character] or #keyPressers[self.character]<4) then
             playerTriedExit(self.character)
             return false
         end
@@ -152,21 +159,9 @@ function ISExitVehicle:isValid()
 end
 
 
-function ISOpenVehicleDoor:isValid()
-    if self.part and self.part:getDoor() and not self.part:getDoor():isOpen() then
-        if (self.vehicle == self.character:getVehicle()) and math.abs(self.vehicle:getCurrentSpeedKmHour()) > 3 and (not keyPressers[self.character] or #keyPressers[self.character]<4) then
-            return false
-        end
-        return true
-    end
-    return false
-end
-
 function ISCloseVehicleDoor:isValid() return self.part and self.part:getDoor() and self.part:getDoor():isOpen() end
+function ISOpenVehicleDoor:isValid() return self.part and self.part:getDoor() and not self.part:getDoor():isOpen() end
 
-
-
----Safe Overwrite
 local ISExitVehicle_perform = ISExitVehicle.perform
 function ISExitVehicle:perform()
     local vehicle = self.character:getVehicle()
