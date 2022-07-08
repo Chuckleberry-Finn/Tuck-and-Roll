@@ -120,9 +120,50 @@ Events.OnTick.Add(forceVehiclePhysics)
 
 
 ----Hard Overwrites to avoid checking if vehicle stopped or not
-function ISExitVehicle:isValid() self.vehicle = self.character:getVehicle(); return true end
+local keyPressers = {}
+local function validateKeyPressTimes(player)
+    if keyPressers[player] and #keyPressers[player]>0 then
+        for key,timeStamp in pairs(keyPressers[player]) do
+            if timeStamp+1500 < getTimestampMs() then
+                keyPressers[player][key] = nil
+            end
+        end
+    end
+end
+local function playerTriedExit(player)
+    if not keyPressers[player] then
+        keyPressers[player] = {}
+    end
+    table.insert(keyPressers[player], getTimestampMs())
+end
+Events.OnPlayerUpdate.Add(validateKeyPressTimes)
+
+
+function ISExitVehicle:isValid()
+    self.vehicle = self.character:getVehicle();
+    if self.vehicle then
+        if math.abs(self.vehicle:getCurrentSpeedKmHour()) > 3 and (not keyPressers[self.character] or #keyPressers[self.character]<4) then
+            playerTriedExit(self.character)
+            return false
+        end
+        return true
+    end
+    return false
+end
+
+
+function ISOpenVehicleDoor:isValid()
+    if self.part and self.part:getDoor() and not self.part:getDoor():isOpen() then
+        if (self.vehicle == self.character:getVehicle()) and math.abs(self.vehicle:getCurrentSpeedKmHour()) > 3 and (not keyPressers[self.character] or #keyPressers[self.character]<4) then
+            return false
+        end
+        return true
+    end
+    return false
+end
+
 function ISCloseVehicleDoor:isValid() return self.part and self.part:getDoor() and self.part:getDoor():isOpen() end
-function ISOpenVehicleDoor:isValid() return self.part and self.part:getDoor() and not self.part:getDoor():isOpen() end
+
 
 
 ---Safe Overwrite
