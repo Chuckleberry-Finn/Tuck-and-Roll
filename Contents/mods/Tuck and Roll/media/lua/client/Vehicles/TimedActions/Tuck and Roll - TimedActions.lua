@@ -12,7 +12,6 @@ local bodyPartSelectionWeight = {
 local bodyPartSelection = {}
 for type,weight in pairs(bodyPartSelectionWeight) do
     for i=1, weight do
-        --print("body parts: "..i.." - "..type)
         table.insert(bodyPartSelection,type)
     end
 end
@@ -96,16 +95,16 @@ end
 
 
 ---@param player IsoPlayer|IsoGameCharacter|IsoMovingObject
-local function stumble(player, speedKmHour)
+local function stumble(player, vehicle)
     local nimbleLvl = player:getPerkLevel(Perks.Nimble)
-    local speed = math.abs(speedKmHour)
+    local speed = math.abs(vehicle:getCurrentSpeedKmHour())
 
     if math.abs(nimbleLvl-speed) > 3 then
         nimbleLvl = nimbleLvl+3
 
         if nimbleLvl < speed then
-            print("nimbleLvl ("..nimbleLvl..") < speed ("..speed..")")
             DamageFromTuckAndRoll(player, speed-nimbleLvl)
+            player:faceThisObjectAlt(vehicle)
         end
     end
 end
@@ -170,5 +169,5 @@ function ISExitVehicle:perform()
     local vehicle = self.character:getVehicle()
     ISExitVehicle_perform(self)
     vehiclesRecentlyJumpedFrom[vehicle] = true
-    stumble(self.character, vehicle:getCurrentSpeedKmHour())
+    stumble(self.character, vehicle)
 end
