@@ -5,5 +5,8 @@ description=[h2][41.72+] Allow players to jump out of moving vehicles at their o
 description=
 description=Tap E (or your interact method) 3 (three) times quickly to jump out of your car while it's moving.
 description=This mod also allows you to exit/enter moving vehicles at low speeds - that speed is dependent on nimbleness.
+description=
+description=[url=https://ko-fi.com/chuckleberryfinn][img]https://i.imgur.com/GxZ38nz.png[/img] [b]Consider supporting Chuck![/b][/url] [url=https://www.patreon.com/bePatron?u=17239488][img]https://raw.githubusercontent.com/ChuckTheSheep/Vanilla-Weapons-Expanded/main/Contents/mods/VanillaWeaponsExpanded/patreon/Patreon%20Logo.png[/img][/url]
+description=
 tags=Build 41;Realistic;Silly/Fun
 visibility=public
