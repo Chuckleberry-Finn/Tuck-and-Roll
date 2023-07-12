@@ -3,7 +3,7 @@ id=2832401837
 title=Tuck and Roll
 description=[h3][41.72+] Allow players to jump out of moving vehicles at their own risk.[/h3]
 description=
-description=[url=https://ko-fi.com/chuckleberryfinn][img]https://raw.githubusercontent.com/ChuckTheSheep/chuckImages/main/kofi.png[/img][/url] [url=https://www.patreon.com/bePatron?u=17239488][img]https://raw.githubusercontent.com/ChuckTheSheep/chuckImages/main/patreon.png[/img][/url]
+description=[url=https://ko-fi.com/chuckleberryfinn][img]https://raw.githubusercontent.com/ChuckTheSheep/chuckImages/main/kofi.png[/img][/url]
 description=
 description=Tap E (or your interact method) 3 (three) times quickly to jump out of your car while it's moving.
 description=This mod also allows you to exit/enter moving vehicles at low speeds - that speed is dependent on nimbleness.
